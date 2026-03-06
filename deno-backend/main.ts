@@ -606,6 +606,12 @@ async function handleAdminStats(req: Request): Promise<Response> {
 }
 
 const adminTemplate = await Deno.readTextFile(new URL("./admin.html", import.meta.url));
+const indexTemplate = await Deno.readTextFile(new URL("./index.html", import.meta.url));
+
+function indexPageHtml(): string {
+  return indexTemplate.replaceAll("__API_HOST__", config.apiHost);
+}
+
 
 function adminPageHtml(): string {
   return adminTemplate.replaceAll("__API_HOST__", config.apiHost);
@@ -654,6 +660,11 @@ async function handleRequest(req: Request): Promise<Response> {
   if (url.pathname === "/admin" || url.pathname === "/admin/") {
     return html(adminPageHtml());
   }
+
+  if (url.pathname === "/" || url.pathname === "/index.html") {
+    return html(indexPageHtml());
+  }
+
 
   if (url.pathname.startsWith("/admin/api/")) {
     return handleAdminApi(req, url);

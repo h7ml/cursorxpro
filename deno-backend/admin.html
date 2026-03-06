@@ -1,153 +1,559 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CursorX Pro 管理后台</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CursorX Pro - Admin Dashboard</title>
   <style>
+    /* ========== CSS Variables ========== */
     :root {
-      --bg: #f4f6f8;
-      --card: #ffffff;
-      --text: #16212b;
-      --muted: #5d6d7e;
-      --brand: #0b7285;
-      --ok: #2f9e44;
-      --warn: #f08c00;
-      --danger: #c92a2a;
-      --border: #dce3ea;
+      /* Light Mode - Pastel Colors */
+      --bg-primary: #fef6fb;
+      --bg-secondary: #fff;
+      --text-primary: #2d1b2e;
+      --text-secondary: #6b5a6d;
+      --text-muted: #9d8c9f;
+
+      /* Gradient Colors */
+      --gradient-1: linear-gradient(135deg, #ffd1dc 0%, #e0c3fc 50%, #c3e0fc 100%);
+      --gradient-accent: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+
+      /* Glass Effect */
+      --glass-bg: rgba(255, 255, 255, 0.7);
+      --glass-border: rgba(255, 255, 255, 0.18);
+      --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+
+      /* Accent Colors */
+      --accent-pink: #f093fb;
+      --accent-purple: #c084fc;
+      --accent-blue: #93c5fd;
+      --accent-green: #86efac;
+      --accent-yellow: #fde047;
+      --accent-red: #fca5a5;
+
+      /* Status Colors */
+      --status-success: #10b981;
+      --status-warning: #f59e0b;
+      --status-error: #ef4444;
+      --status-info: #3b82f6;
+
+      /* Shadows */
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+      --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+      --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
+      --shadow-glow: 0 0 40px rgba(240, 147, 251, 0.3);
     }
-    * { box-sizing: border-box; }
-    body {
+
+    [data-theme="dark"] {
+      --bg-primary: #1a0f1e;
+      --bg-secondary: #2d1b2e;
+      --text-primary: #f5e6f7;
+      --text-secondary: #c9b3cb;
+      --text-muted: #8d7a8f;
+
+      --glass-bg: rgba(45, 27, 46, 0.7);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+      --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+      --shadow-glow: 0 0 40px rgba(240, 147, 251, 0.5);
+    }
+
+    /* ========== Reset & Base ========== */
+    * {
       margin: 0;
-      font-family: "IBM Plex Sans", "PingFang SC", "Microsoft YaHei", sans-serif;
-      color: var(--text);
-      background: radial-gradient(circle at top right, #d7f0ff 0%, var(--bg) 35%);
+      padding: 0;
+      box-sizing: border-box;
     }
-    .container { max-width: 1200px; margin: 24px auto; padding: 0 16px; }
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 16px;
-      margin-bottom: 16px;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      transition: background 0.3s ease, color 0.3s ease;
     }
-    h1,h2 { margin: 0 0 12px 0; }
-    .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
-    input, select, button, textarea {
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 8px 10px;
-      font-size: 14px;
+
+    /* ========== Animated Background ========== */
+    .bg-gradient {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      background: var(--gradient-1);
+      animation: gradientShift 15s ease infinite;
     }
-    button {
-      background: var(--brand);
+
+    @keyframes gradientShift {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 0.5; }
+    }
+
+    /* ========== Container ========== */
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    /* ========== Glass Card ========== */
+    .glass-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border-radius: 24px;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-shadow);
+      padding: 2rem;
+      margin-bottom: 2rem;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .glass-card:hover {
+      box-shadow: var(--shadow-lg);
+    }
+
+    /* ========== Typography ========== */
+    h1, h2, h3 {
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      background: var(--gradient-accent);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    h2 {
+      font-size: 1.75rem;
+      color: var(--text-primary);
+    }
+
+    .muted {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+
+    /* ========== Flex Utilities ========== */
+    .flex {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .flex-between {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    /* ========== Form Elements ========== */
+    input, select, textarea {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 0.75rem 1rem;
+      font-size: 0.9375rem;
+      color: var(--text-primary);
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent-pink);
+      box-shadow: 0 0 0 3px rgba(240, 147, 251, 0.1);
+    }
+
+    input::placeholder {
+      color: var(--text-muted);
+    }
+
+    /* ========== Buttons ========== */
+    button, .btn {
+      background: var(--gradient-accent);
       color: white;
       border: none;
+      border-radius: 12px;
+      padding: 0.75rem 1.5rem;
+      font-size: 0.9375rem;
+      font-weight: 600;
       cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      white-space: nowrap;
     }
-    button.secondary { background: #3b5bdb; }
-    button.warn { background: var(--warn); }
-    button.danger { background: var(--danger); }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { border-bottom: 1px solid var(--border); padding: 8px; text-align: left; font-size: 13px; }
-    .hidden { display: none; }
-    .muted { color: var(--muted); }
-    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
-    .stat { padding: 12px; border: 1px dashed var(--border); border-radius: 10px; }
-    @media (max-width: 780px) {
-      th:nth-child(5), td:nth-child(5), th:nth-child(6), td:nth-child(6) { display: none; }
+
+    button:hover, .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-glow);
+    }
+
+    button:active, .btn:active {
+      transform: translateY(0);
+    }
+
+    button.secondary {
+      background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+    }
+
+    button.success {
+      background: linear-gradient(135deg, #10b981, #34d399);
+    }
+
+    button.warn {
+      background: linear-gradient(135deg, #f59e0b, #fbbf24);
+    }
+
+    button.danger {
+      background: linear-gradient(135deg, #ef4444, #f87171);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    /* ========== Stats Grid ========== */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border-radius: 16px;
+      border: 1px solid var(--glass-border);
+      padding: 1.5rem;
+      text-align: center;
+      transition: transform 0.2s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+    }
+
+    .stat-value {
+      font-size: 2.5rem;
+      font-weight: 800;
+      background: var(--gradient-accent);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    /* ========== Table ========== */
+    .table-container {
+      overflow-x: auto;
+      border-radius: 16px;
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    th {
+      background: rgba(240, 147, 251, 0.1);
+      font-weight: 600;
+      color: var(--text-primary);
+      font-size: 0.875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    td {
+      font-size: 0.9375rem;
+      color: var(--text-secondary);
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover {
+      background: rgba(240, 147, 251, 0.05);
+    }
+
+    /* ========== Status Badges ========== */
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .badge-active {
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--status-success);
+    }
+
+    .badge-used {
+      background: rgba(59, 130, 246, 0.2);
+      color: var(--status-info);
+    }
+
+    .badge-disabled {
+      background: rgba(239, 68, 68, 0.2);
+      color: var(--status-error);
+    }
+
+    .badge-success {
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--status-success);
+    }
+
+    .badge-fail {
+      background: rgba(239, 68, 68, 0.2);
+      color: var(--status-error);
+    }
+
+    /* ========== Theme Toggle ========== */
+    .theme-toggle {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: var(--gradient-accent);
+      border: none;
+      box-shadow: var(--shadow-glow);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      z-index: 1000;
+      transition: transform 0.2s ease;
+    }
+
+    .theme-toggle:hover {
+      transform: scale(1.1) rotate(15deg);
+    }
+
+    /* ========== Hidden ========== */
+    .hidden {
+      display: none !important;
+    }
+
+    /* ========== Responsive ========== */
+    @media (max-width: 768px) {
+      .container {
+        padding: 1rem;
+      }
+
+      .glass-card {
+        padding: 1.5rem;
+      }
+
+      h1 {
+        font-size: 2rem;
+      }
+
+      .flex, .flex-between {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      button, .btn {
+        width: 100%;
+        justify-content: center;
+      }
+
+      th:nth-child(n+5), td:nth-child(n+5) {
+        display: none;
+      }
+    }
+
+    /* ========== Animations ========== */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .glass-card {
+      animation: fadeIn 0.5s ease;
     }
   </style>
 </head>
 <body>
+  <div class="bg-gradient"></div>
+
   <div class="container">
-    <div id="loginCard" class="card">
-      <h1>CursorX Pro 管理后台</h1>
-      <p class="muted">API Host: __API_HOST__</p>
-      <div class="row">
-        <input id="username" placeholder="管理员用户名" value="admin" />
-        <input id="password" placeholder="管理员密码" type="password" />
+    <!-- Login Card -->
+    <div id="loginCard" class="glass-card">
+      <h1>CursorX Pro Admin</h1>
+      <p class="muted" style="margin-bottom: 2rem;">API Host: __API_HOST__</p>
+      <div class="flex">
+        <input id="username" placeholder="管理员用户名" value="admin" style="flex: 1;" />
+        <input id="password" placeholder="管理员密码" type="password" style="flex: 1;" />
         <button id="loginBtn">登录</button>
       </div>
-      <p id="loginMsg" class="muted"></p>
+      <p id="loginMsg" class="muted" style="margin-top: 1rem;"></p>
     </div>
 
+    <!-- Main App -->
     <div id="app" class="hidden">
-      <div class="card row" style="justify-content: space-between;">
-        <h2>控制台</h2>
-        <div class="row">
-          <span id="whoami" class="muted"></span>
-          <button id="refreshBtn" class="secondary">刷新数据</button>
-          <button id="logoutBtn" class="warn">退出登录</button>
+      <!-- Header -->
+      <div class="glass-card">
+        <div class="flex-between">
+          <div>
+            <h1>Dashboard</h1>
+            <p class="muted" id="whoami"></p>
+          </div>
+          <div class="flex">
+            <button id="refreshBtn" class="secondary">🔄 刷新数据</button>
+            <button id="logoutBtn" class="warn">🚪 退出登录</button>
+          </div>
         </div>
       </div>
 
-      <div class="card">
-        <h2>统计</h2>
-        <div id="stats" class="stat-grid"></div>
-      </div>
+      <!-- Stats -->
+      <div class="stats-grid" id="stats"></div>
 
-      <div class="card">
+      <!-- Create Tickets -->
+      <div class="glass-card">
         <h2>创建票据</h2>
-        <div class="row">
-          <input id="newCode" placeholder="指定票据码(可选)" />
-          <input id="newExpires" type="datetime-local" />
-          <input id="newNote" placeholder="备注" />
-          <button id="createTicketBtn">创建单个票据</button>
+        <div class="flex" style="margin-bottom: 1rem;">
+          <input id="newCode" placeholder="指定票据码(可选)" style="flex: 1;" />
+          <input id="newExpires" type="datetime-local" style="flex: 1;" />
+          <input id="newNote" placeholder="备注" style="flex: 1;" />
+          <button id="createTicketBtn" class="success">➕ 创建单个</button>
         </div>
-        <div class="row" style="margin-top: 10px;">
-          <input id="bulkPrefix" placeholder="批量前缀(可选)" />
-          <input id="bulkCount" type="number" min="1" max="500" value="10" />
-          <input id="bulkDays" type="number" min="1" placeholder="有效天数(可选)" />
-          <button id="bulkCreateBtn" class="secondary">批量生成</button>
+        <div class="flex">
+          <input id="bulkPrefix" placeholder="批量前缀(可选)" style="flex: 1;" />
+          <input id="bulkCount" type="number" min="1" max="500" value="10" style="width: 120px;" />
+          <input id="bulkDays" type="number" min="1" placeholder="有效天数(可选)" style="width: 150px;" />
+          <button id="bulkCreateBtn" class="secondary">🎫 批量生成</button>
         </div>
-        <p id="createMsg" class="muted"></p>
+        <p id="createMsg" class="muted" style="margin-top: 1rem;"></p>
       </div>
 
-      <div class="card">
+      <!-- Tickets Management -->
+      <div class="glass-card">
         <h2>票据管理</h2>
-        <div class="row" style="margin-bottom: 10px;">
-          <input id="ticketKeyword" placeholder="搜索 ticket code" />
-          <select id="ticketStatus">
+        <div class="flex" style="margin-bottom: 1.5rem;">
+          <input id="ticketKeyword" placeholder="搜索 ticket code" style="flex: 1;" />
+          <select id="ticketStatus" style="width: 150px;">
             <option value="">全部状态</option>
             <option value="active">active</option>
             <option value="used">used</option>
             <option value="disabled">disabled</option>
           </select>
-          <button id="ticketSearchBtn">查询</button>
+          <button id="ticketSearchBtn">🔍 查询</button>
         </div>
-        <table>
-          <thead>
-            <tr>
-              <th>Code</th><th>状态</th><th>绑定机器</th><th>过期时间</th><th>备注</th><th>更新时间</th><th>操作</th>
-            </tr>
-          </thead>
-          <tbody id="ticketBody"></tbody>
-        </table>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>状态</th>
+                <th>绑定机器</th>
+                <th>过期时间</th>
+                <th>备注</th>
+                <th>更新时间</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="ticketBody"></tbody>
+          </table>
+        </div>
       </div>
 
-      <div class="card">
+      <!-- Usage Logs -->
+      <div class="glass-card">
         <h2>使用记录</h2>
-        <div class="row" style="margin-bottom: 10px;">
-          <input id="logTicketCode" placeholder="按 ticketCode 过滤" />
-          <button id="logSearchBtn">查询记录</button>
+        <div class="flex" style="margin-bottom: 1.5rem;">
+          <input id="logTicketCode" placeholder="按 ticketCode 过滤" style="flex: 1;" />
+          <button id="logSearchBtn">🔍 查询记录</button>
         </div>
-        <table>
-          <thead>
-            <tr>
-              <th>时间</th><th>ticket</th><th>机器码</th><th>平台</th><th>结果</th><th>IP</th><th>说明</th>
-            </tr>
-          </thead>
-          <tbody id="logBody"></tbody>
-        </table>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>时间</th>
+                <th>Ticket</th>
+                <th>机器码</th>
+                <th>平台</th>
+                <th>结果</th>
+                <th>IP</th>
+                <th>说明</th>
+              </tr>
+            </thead>
+            <tbody id="logBody"></tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
 
+  <!-- Theme Toggle -->
+  <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+    <span id="themeIcon">🌙</span>
+  </button>
+
   <script>
     let authToken = "";
 
+    // Theme Toggle
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = document.getElementById('themeIcon');
+    const html = document.documentElement;
+
+    const currentTheme = localStorage.getItem('theme') || 'light';
+    html.setAttribute('data-theme', currentTheme);
+    themeIcon.textContent = currentTheme === 'dark' ? '☀️' : '🌙';
+
+    themeToggle.addEventListener('click', () => {
+      const theme = html.getAttribute('data-theme');
+      const newTheme = theme === 'light' ? 'dark' : 'light';
+      html.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+      themeIcon.textContent = newTheme === 'dark' ? '☀️' : '🌙';
+    });
+
+    // API Helper
     async function api(path, options = {}) {
       const headers = options.headers || {};
       if (authToken) headers["Authorization"] = `Bearer ${authToken}`;
@@ -160,6 +566,7 @@
 
     function fmt(v) { return v || "-"; }
 
+    // Login
     async function login() {
       const username = document.getElementById("username").value.trim();
       const password = document.getElementById("password").value;
@@ -167,13 +574,16 @@
       try {
         const res = await api("/admin/api/login", { method: "POST", body: JSON.stringify({ username, password }) });
         authToken = res?.data?.token || "";
-        msg.textContent = "登录成功";
+        msg.textContent = "✅ 登录成功";
+        msg.style.color = "var(--status-success)";
         await initApp();
       } catch (e) {
-        msg.textContent = e.message;
+        msg.textContent = "❌ " + e.message;
+        msg.style.color = "var(--status-error)";
       }
     }
 
+    // Logout
     async function logout() {
       try { await api("/admin/api/logout", { method: "POST" }); } catch {}
       authToken = "";
@@ -181,18 +591,35 @@
       document.getElementById("loginCard").classList.remove("hidden");
     }
 
+    // Load Stats
     async function loadStats() {
       const res = await api("/admin/api/stats");
       const s = res.data;
       document.getElementById("stats").innerHTML = `
-        <div class="stat"><div class="muted">总票据</div><div>${s.totalTickets}</div></div>
-        <div class="stat"><div class="muted">可用</div><div>${s.activeTickets}</div></div>
-        <div class="stat"><div class="muted">已使用</div><div>${s.usedTickets}</div></div>
-        <div class="stat"><div class="muted">已禁用</div><div>${s.disabledTickets}</div></div>
-        <div class="stat"><div class="muted">使用记录</div><div>${s.usageCount}</div></div>
+        <div class="stat-card">
+          <div class="stat-value">${s.totalTickets}</div>
+          <div class="stat-label">总票据</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${s.activeTickets}</div>
+          <div class="stat-label">可用</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${s.usedTickets}</div>
+          <div class="stat-label">已使用</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${s.disabledTickets}</div>
+          <div class="stat-label">已禁用</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${s.usageCount}</div>
+          <div class="stat-label">使用记录</div>
+        </div>
       `;
     }
 
+    // Load Tickets
     async function loadTickets() {
       const keyword = document.getElementById("ticketKeyword").value.trim();
       const status = document.getElementById("ticketStatus").value;
@@ -203,22 +630,25 @@
       const body = document.getElementById("ticketBody");
       body.innerHTML = res.data.map(t => `
         <tr>
-          <td>${t.code}</td>
-          <td>${t.status}</td>
-          <td>${fmt(t.boundMachineCode)}</td>
+          <td><strong>${t.code}</strong></td>
+          <td><span class="badge badge-${t.status}">${t.status}</span></td>
+          <td><code style="font-size: 0.75rem;">${fmt(t.boundMachineCode)}</code></td>
           <td>${fmt(t.expiresAt)}</td>
           <td>${fmt(t.note)}</td>
           <td>${fmt(t.updatedAt)}</td>
           <td>
-            <button onclick="setStatus('${t.code}','active')">激活</button>
-            <button class="warn" onclick="setStatus('${t.code}','disabled')">禁用</button>
-            <button class="secondary" onclick="unbindMachine('${t.code}')">解绑</button>
-            <button class="danger" onclick="deleteTicket('${t.code}')">删除</button>
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+              <button onclick="setStatus('${t.code}','active')" class="success" style="padding: 0.5rem 1rem; font-size: 0.75rem;">激活</button>
+              <button onclick="setStatus('${t.code}','disabled')" class="warn" style="padding: 0.5rem 1rem; font-size: 0.75rem;">禁用</button>
+              <button onclick="unbindMachine('${t.code}')" class="secondary" style="padding: 0.5rem 1rem; font-size: 0.75rem;">解绑</button>
+              <button onclick="deleteTicket('${t.code}')" class="danger" style="padding: 0.5rem 1rem; font-size: 0.75rem;">删除</button>
+            </div>
           </td>
         </tr>
       `).join("");
     }
 
+    // Load Logs
     async function loadLogs() {
       const ticketCode = document.getElementById("logTicketCode").value.trim();
       const qs = new URLSearchParams();
@@ -229,16 +659,17 @@
       body.innerHTML = res.data.map(l => `
         <tr>
           <td>${l.createdAt}</td>
-          <td>${l.ticketCode}</td>
-          <td>${l.machineCode}</td>
+          <td><strong>${l.ticketCode}</strong></td>
+          <td><code style="font-size: 0.75rem;">${l.machineCode}</code></td>
           <td>${l.platform}</td>
-          <td>${l.success ? "success" : "fail"}</td>
+          <td><span class="badge badge-${l.success ? 'success' : 'fail'}">${l.success ? "success" : "fail"}</span></td>
           <td>${l.ip}</td>
           <td>${l.message}</td>
         </tr>
       `).join("");
     }
 
+    // Create Ticket
     async function createTicket() {
       const code = document.getElementById("newCode").value.trim();
       const expiresLocal = document.getElementById("newExpires").value;
@@ -250,13 +681,16 @@
           method: "POST",
           body: JSON.stringify({ code, expiresAt, note })
         });
-        msg.textContent = "创建成功";
+        msg.textContent = "✅ 创建成功";
+        msg.style.color = "var(--status-success)";
         await refreshAll();
       } catch (e) {
-        msg.textContent = e.message;
+        msg.textContent = "❌ " + e.message;
+        msg.style.color = "var(--status-error)";
       }
     }
 
+    // Bulk Create
     async function bulkCreate() {
       const prefix = document.getElementById("bulkPrefix").value.trim();
       const count = Number(document.getElementById("bulkCount").value || "1");
@@ -268,13 +702,16 @@
           method: "POST",
           body: JSON.stringify({ prefix, count, expiresInDays })
         });
-        msg.textContent = `批量生成成功: ${res.data.length} 个`;
+        msg.textContent = `✅ 批量生成成功: ${res.data.length} 个`;
+        msg.style.color = "var(--status-success)";
         await refreshAll();
       } catch (e) {
-        msg.textContent = e.message;
+        msg.textContent = "❌ " + e.message;
+        msg.style.color = "var(--status-error)";
       }
     }
 
+    // Ticket Actions
     async function setStatus(code, status) {
       await api(`/admin/api/tickets/${code}`, { method: "PATCH", body: JSON.stringify({ status }) });
       await refreshAll();
@@ -286,22 +723,26 @@
     }
 
     async function deleteTicket(code) {
+      if (!confirm(`确定要删除票据 ${code} 吗？`)) return;
       await api(`/admin/api/tickets/${code}`, { method: "DELETE" });
       await refreshAll();
     }
 
+    // Refresh All
     async function refreshAll() {
       await Promise.all([loadStats(), loadTickets(), loadLogs()]);
     }
 
+    // Init App
     async function initApp() {
       const me = await api("/admin/api/me");
-      document.getElementById("whoami").textContent = `当前管理员: ${me.data.username}`;
+      document.getElementById("whoami").textContent = `👤 当前管理员: ${me.data.username}`;
       document.getElementById("loginCard").classList.add("hidden");
       document.getElementById("app").classList.remove("hidden");
       await refreshAll();
     }
 
+    // Event Listeners
     document.getElementById("loginBtn").addEventListener("click", login);
     document.getElementById("logoutBtn").addEventListener("click", logout);
     document.getElementById("refreshBtn").addEventListener("click", refreshAll);
@@ -310,15 +751,17 @@
     document.getElementById("ticketSearchBtn").addEventListener("click", loadTickets);
     document.getElementById("logSearchBtn").addEventListener("click", loadLogs);
 
+    // Global Functions
     window.setStatus = setStatus;
     window.unbindMachine = unbindMachine;
     window.deleteTicket = deleteTicket;
 
+    // Auto-login if session exists
     (async () => {
       try {
         await initApp();
       } catch {
-        // 未登录则停留在登录页面
+        // Stay on login page
       }
     })();
   </script>
