@@ -55,6 +55,9 @@ const config = {
   host: Deno.env.get("HOST") ?? "0.0.0.0",
   port: Number(Deno.env.get("PORT") ?? "8000"),
   apiHost: Deno.env.get("PUBLIC_API_HOST") ?? "https://cursorxpro.deno.dev",
+  upstreamApiBaseUrl: (Deno.env.get("UPSTREAM_API_BASE_URL") ?? "").trim(),
+  upstreamBearerToken: (Deno.env.get("UPSTREAM_AUTH_BEARER_TOKEN") ?? "").trim(),
+  upstreamTimeoutMs: Number(Deno.env.get("UPSTREAM_TIMEOUT_MS") ?? "15000"),
   aesKey: Deno.env.get("AES_KEY") ?? "nKEg32K9jsdJRMSA2pcn83LM9sUUwq29",
   jwtSecret: Deno.env.get("JWT_SECRET") ?? "replace_this_with_random_secret",
   sessionTtlHours: Number(Deno.env.get("SESSION_TTL_HOURS") ?? "72"),
@@ -62,8 +65,7 @@ const config = {
   adminBootstrapPassword: Deno.env.get("ADMIN_BOOTSTRAP_PASSWORD") ?? "ChangeMe_123456",
   navigationLinks: [
     { text: "官方文档", url: "https://docs.cursor.com", icon: "book" },
-    { text: "状态页", url: "https://status.cursor.com", icon: "pulse" },
-    { text: "你的服务", url: "https://cursorxpro.deno.dev/admin", icon: "server" },
+    { text: "状态页", url: "https://status.cursor.com", icon: "pulse" }
   ],
 };
 
@@ -300,6 +302,39 @@ function clearAdminCookie(): string {
 }
 
 async function handleUseTicket(req: Request): Promise<Response> {
+  if (config.upstreamApiBaseUrl) {
+    if (!config.upstreamBearerToken) {
+      return json({ code: 500, message: "未配置 UPSTREAM_AUTH_BEARER_TOKEN", data: null }, 500);
+    }
+
+    try {
+      const body = await req.text();
+      const upstream = new URL("/api/tickets/use", config.upstreamApiBaseUrl).toString();
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), config.upstreamTimeoutMs);
+      const resp = await fetch(upstream, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${config.upstreamBearerToken}`,
+        },
+        body,
+        signal: controller.signal,
+      });
+      clearTimeout(timer);
+
+      const text = await resp.text();
+      const headers = new Headers();
+      headers.set("Content-Type", resp.headers.get("content-type") ?? "application/json; charset=utf-8");
+      const cors = corsHeaders();
+      cors.forEach((v, k) => headers.set(k, v));
+      return new Response(text, { status: resp.status, headers });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "unknown error";
+      return json({ code: 502, message: `上游请求失败: ${message}`, data: null }, 502);
+    }
+  }
+
   try {
     const body = await readJson<{ data?: string }>(req);
     if (!body.data) {
@@ -372,6 +407,36 @@ async function handleUseTicket(req: Request): Promise<Response> {
 }
 
 async function handleNavigationLinks(): Promise<Response> {
+  if (config.upstreamApiBaseUrl) {
+    if (!config.upstreamBearerToken) {
+      return json({ code: 500, message: "未配置 UPSTREAM_AUTH_BEARER_TOKEN", data: null }, 500);
+    }
+
+    try {
+      const upstream = new URL("/api/navigation/links", config.upstreamApiBaseUrl).toString();
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), config.upstreamTimeoutMs);
+      const resp = await fetch(upstream, {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${config.upstreamBearerToken}`,
+        },
+        signal: controller.signal,
+      });
+      clearTimeout(timer);
+
+      const text = await resp.text();
+      const headers = new Headers();
+      headers.set("Content-Type", resp.headers.get("content-type") ?? "application/json; charset=utf-8");
+      const cors = corsHeaders();
+      cors.forEach((v, k) => headers.set(k, v));
+      return new Response(text, { status: resp.status, headers });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "unknown error";
+      return json({ code: 502, message: `上游请求失败: ${message}`, data: null }, 502);
+    }
+  }
+
   return json({ code: 200, message: "success", data: config.navigationLinks }, 200);
 }
 
