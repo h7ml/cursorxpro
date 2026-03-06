@@ -1,5 +1,7 @@
 /// <reference lib="deno.ns" />
 
+import { logRequest } from "./logger_middleware.ts";
+
 type PlatformType = "MAC" | "WINDOWS" | "LINUX" | "OTHER";
 
 type TicketStatus = "active" | "disabled" | "used";
@@ -678,4 +680,4 @@ await ensureBootstrapAdmin();
 console.log(`CursorX Pro backend listening on http://${config.host}:${config.port}`);
 console.log(`Admin panel: http://${config.host}:${config.port}/admin`);
 
-Deno.serve({ hostname: config.host, port: config.port }, handleRequest);
+Deno.serve({ hostname: config.host, port: config.port }, (req) => logRequest(req, handleRequest));
