@@ -1,0 +1,164 @@
+{
+  "metadata": {
+    "generated_at": "2026-03-06T12:36:16+08:00",
+    "project_name": "CursorX_v2.0",
+    "project_type": "binary_reverse_engineering",
+    "framework": "Wails v2 (Go + React)",
+    "platforms": ["macOS", "Windows"],
+    "total_files_scanned": 4,
+    "total_files_in_repo": 38,
+    "coverage_percentage": 10.5,
+    "truncated": false,
+    "scan_strategy": "module_priority"
+  },
+  "root_context": {
+    "path": "/Users/admin/Library/Containers/com.tencent.xinWeChat/Data/Documents/xwechat_files/wxid_gta0xa8bzmk322_f010/msg/file/2026-03/CursorX_v2.0",
+    "claude_md": "CLAUDE.md",
+    "description": "CursorX v2.0 逆向分析项目，Cursor IDE 订阅绕过工具，基于 Wails v2 框架",
+    "key_findings": {
+      "api_host": "https://cursorx.teamcook.dev",
+      "api_endpoints": [
+        "POST /api/tickets/use",
+        "GET /api/navigation/links"
+      ],
+      "encryption": {
+        "algorithm": "AES",
+        "hardcoded_key": "nKEg32K9jsdJRMSA2pcn83LM9sUUwq29"
+      },
+      "target_database": {
+        "mac": "$HOME/Library/Application Support/Cursor/User/globalStorage/state.vscdb",
+        "windows": "%APPDATA%\\Cursor\\User\\globalStorage\\state.vscdb"
+      },
+      "modified_fields": [
+        "cursorAuth/accessToken",
+        "cursorAuth/refreshToken",
+        "cursorAuth/stripeMembershipType",
+        "cursorAuth/cachedEmail"
+      ],
+      "key_go_functions": [
+        "main.(*App).UpdateCursorAuth",
+        "main.(*CursorAuthManager).UpdateCursorAuthValue",
+        "main.encryptRequest",
+        "main.decryptResponse"
+      ],
+      "dependencies": [
+        "github.com/mattn/go-sqlite3",
+        "github.com/denisbrodbeck/machineid",
+        "github.com/google/uuid"
+      ]
+    }
+  },
+  "modules": [
+    {
+      "name": "Mac",
+      "path": "Mac/",
+      "claude_md": "Mac/CLAUDE.md",
+      "platform": "macOS",
+      "description": "macOS 发行版本，.app Bundle 格式",
+      "entry_points": [
+        "Mac/CursorX.app/Contents/MacOS/CursorX"
+      ],
+      "architecture": "Universal Binary (x86_64 + arm64)",
+      "file_format": "Mach-O",
+      "file_size_mb": 7,
+      "key_files": [
+        {
+          "path": "Mac/CursorX.app/Contents/MacOS/CursorX",
+          "type": "executable",
+          "importance": "critical",
+          "notes": "核心逻辑，Universal Binary 双架构"
+        },
+        {
+          "path": "Mac/CursorX.app/Contents/Info.plist",
+          "type": "config",
+          "importance": "medium",
+          "notes": "Bundle 元数据，Bundle ID: com.wails.CursorX"
+        },
+        {
+          "path": "Mac/CursorX.app/Contents/Resources/iconfile.icns",
+          "type": "resource",
+          "importance": "low",
+          "notes": "应用图标，无逻辑"
+        }
+      ],
+      "embedded_frontend": {
+        "framework": "React 18",
+        "estimated_offset": "0x570000 (~5.6 MB)",
+        "extraction_status": "pending"
+      },
+      "analysis_gaps": [
+        "前端 JS 代码完整提取",
+        "machineid 具体算法分析",
+        "符号表完整枚举",
+        "代码签名状态验证"
+      ]
+    },
+    {
+      "name": "Win",
+      "path": "Win/",
+      "claude_md": "Win/CLAUDE.md",
+      "platform": "Windows",
+      "description": "Windows 发行版本，单文件 PE32+ 可执行",
+      "entry_points": [
+        "Win/CursorX.exe"
+      ],
+      "architecture": "x86-64 (AMD64)",
+      "file_format": "PE32+",
+      "file_size_mb": 9,
+      "key_files": [
+        {
+          "path": "Win/CursorX.exe",
+          "type": "executable",
+          "importance": "critical",
+          "notes": "所有逻辑均在此文件内，PE32+ 格式"
+        }
+      ],
+      "embedded_frontend": {
+        "framework": "React 18",
+        "estimated_offset": "unknown",
+        "extraction_status": "pending"
+      },
+      "analysis_gaps": [
+        "PE 版本信息节区分析",
+        "Authenticode 签名验证",
+        "前端 JS 提取",
+        "导入表分析",
+        "WebView2 初始化参数",
+        "防调试检测"
+      ]
+    }
+  ],
+  "ignored_patterns": [
+    ".git/**",
+    ".DS_Store",
+    ".spec-workflow/**"
+  ],
+  "ignored_stats": {
+    "git_objects": 4,
+    "ds_store_files": 3,
+    "spec_workflow_files": 7,
+    "total_ignored": 14
+  },
+  "coverage_report": {
+    "total_files": 38,
+    "scanned_files": 4,
+    "ignored_files": 14,
+    "unscanned_files": 20,
+    "coverage_by_type": {
+      "executables": "100% (2/2)",
+      "configs": "100% (1/1)",
+      "resources": "100% (1/1)",
+      "git_internals": "0% (0/20)",
+      "spec_workflow": "0% (0/7)"
+    }
+  },
+  "next_steps": [
+    "提取 Mac 版本前端 JS 代码（偏移 ~5.6 MB 处）",
+    "提取 Win 版本前端 JS 代码（需独立定位偏移）",
+    "枚举 Mac 版本 Go 符号表（go tool nm）",
+    "分析 Win 版本 PE 导入表和版本信息",
+    "动态抓包分析 API 请求/响应完整 schema",
+    "验证 machineid 算法（设备指纹收集范围）",
+    "分析 state.vscdb 完整 schema"
+  ]
+}

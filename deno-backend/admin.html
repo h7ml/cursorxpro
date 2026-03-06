@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CursorX Pro 管理后台</title>
+  <style>
+    :root {
+      --bg: #f4f6f8;
+      --card: #ffffff;
+      --text: #16212b;
+      --muted: #5d6d7e;
+      --brand: #0b7285;
+      --ok: #2f9e44;
+      --warn: #f08c00;
+      --danger: #c92a2a;
+      --border: #dce3ea;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans", "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at top right, #d7f0ff 0%, var(--bg) 35%);
+    }
+    .container { max-width: 1200px; margin: 24px auto; padding: 0 16px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+    }
+    h1,h2 { margin: 0 0 12px 0; }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+    input, select, button, textarea {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 14px;
+    }
+    button {
+      background: var(--brand);
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button.secondary { background: #3b5bdb; }
+    button.warn { background: var(--warn); }
+    button.danger { background: var(--danger); }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border-bottom: 1px solid var(--border); padding: 8px; text-align: left; font-size: 13px; }
+    .hidden { display: none; }
+    .muted { color: var(--muted); }
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+    .stat { padding: 12px; border: 1px dashed var(--border); border-radius: 10px; }
+    @media (max-width: 780px) {
+      th:nth-child(5), td:nth-child(5), th:nth-child(6), td:nth-child(6) { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="loginCard" class="card">
+      <h1>CursorX Pro 管理后台</h1>
+      <p class="muted">API Host: __API_HOST__</p>
+      <div class="row">
+        <input id="username" placeholder="管理员用户名" value="admin" />
+        <input id="password" placeholder="管理员密码" type="password" />
+        <button id="loginBtn">登录</button>
+      </div>
+      <p id="loginMsg" class="muted"></p>
+    </div>
+
+    <div id="app" class="hidden">
+      <div class="card row" style="justify-content: space-between;">
+        <h2>控制台</h2>
+        <div class="row">
+          <span id="whoami" class="muted"></span>
+          <button id="refreshBtn" class="secondary">刷新数据</button>
+          <button id="logoutBtn" class="warn">退出登录</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>统计</h2>
+        <div id="stats" class="stat-grid"></div>
+      </div>
+
+      <div class="card">
+        <h2>创建票据</h2>
+        <div class="row">
+          <input id="newCode" placeholder="指定票据码(可选)" />
+          <input id="newExpires" type="datetime-local" />
+          <input id="newNote" placeholder="备注" />
+          <button id="createTicketBtn">创建单个票据</button>
+        </div>
+        <div class="row" style="margin-top: 10px;">
+          <input id="bulkPrefix" placeholder="批量前缀(可选)" />
+          <input id="bulkCount" type="number" min="1" max="500" value="10" />
+          <input id="bulkDays" type="number" min="1" placeholder="有效天数(可选)" />
+          <button id="bulkCreateBtn" class="secondary">批量生成</button>
+        </div>
+        <p id="createMsg" class="muted"></p>
+      </div>
+
+      <div class="card">
+        <h2>票据管理</h2>
+        <div class="row" style="margin-bottom: 10px;">
+          <input id="ticketKeyword" placeholder="搜索 ticket code" />
+          <select id="ticketStatus">
+            <option value="">全部状态</option>
+            <option value="active">active</option>
+            <option value="used">used</option>
+            <option value="disabled">disabled</option>
+          </select>
+          <button id="ticketSearchBtn">查询</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Code</th><th>状态</th><th>绑定机器</th><th>过期时间</th><th>备注</th><th>更新时间</th><th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="ticketBody"></tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h2>使用记录</h2>
+        <div class="row" style="margin-bottom: 10px;">
+          <input id="logTicketCode" placeholder="按 ticketCode 过滤" />
+          <button id="logSearchBtn">查询记录</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>时间</th><th>ticket</th><th>机器码</th><th>平台</th><th>结果</th><th>IP</th><th>说明</th>
+            </tr>
+          </thead>
+          <tbody id="logBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let authToken = "";
+
+    async function api(path, options = {}) {
+      const headers = options.headers || {};
+      if (authToken) headers["Authorization"] = `Bearer ${authToken}`;
+      if (!headers["Content-Type"] && options.body) headers["Content-Type"] = "application/json";
+      const res = await fetch(path, { ...options, headers, credentials: "include" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || `HTTP ${res.status}`);
+      return data;
+    }
+
+    function fmt(v) { return v || "-"; }
+
+    async function login() {
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value;
+      const msg = document.getElementById("loginMsg");
+      try {
+        const res = await api("/admin/api/login", { method: "POST", body: JSON.stringify({ username, password }) });
+        authToken = res?.data?.token || "";
+        msg.textContent = "登录成功";
+        await initApp();
+      } catch (e) {
+        msg.textContent = e.message;
+      }
+    }
+
+    async function logout() {
+      try { await api("/admin/api/logout", { method: "POST" }); } catch {}
+      authToken = "";
+      document.getElementById("app").classList.add("hidden");
+      document.getElementById("loginCard").classList.remove("hidden");
+    }
+
+    async function loadStats() {
+      const res = await api("/admin/api/stats");
+      const s = res.data;
+      document.getElementById("stats").innerHTML = `
+        <div class="stat"><div class="muted">总票据</div><div>${s.totalTickets}</div></div>
+        <div class="stat"><div class="muted">可用</div><div>${s.activeTickets}</div></div>
+        <div class="stat"><div class="muted">已使用</div><div>${s.usedTickets}</div></div>
+        <div class="stat"><div class="muted">已禁用</div><div>${s.disabledTickets}</div></div>
+        <div class="stat"><div class="muted">使用记录</div><div>${s.usageCount}</div></div>
+      `;
+    }
+
+    async function loadTickets() {
+      const keyword = document.getElementById("ticketKeyword").value.trim();
+      const status = document.getElementById("ticketStatus").value;
+      const qs = new URLSearchParams();
+      if (keyword) qs.set("keyword", keyword);
+      if (status) qs.set("status", status);
+      const res = await api(`/admin/api/tickets?${qs.toString()}`);
+      const body = document.getElementById("ticketBody");
+      body.innerHTML = res.data.map(t => `
+        <tr>
+          <td>${t.code}</td>
+          <td>${t.status}</td>
+          <td>${fmt(t.boundMachineCode)}</td>
+          <td>${fmt(t.expiresAt)}</td>
+          <td>${fmt(t.note)}</td>
+          <td>${fmt(t.updatedAt)}</td>
+          <td>
+            <button onclick="setStatus('${t.code}','active')">激活</button>
+            <button class="warn" onclick="setStatus('${t.code}','disabled')">禁用</button>
+            <button class="secondary" onclick="unbindMachine('${t.code}')">解绑</button>
+            <button class="danger" onclick="deleteTicket('${t.code}')">删除</button>
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    async function loadLogs() {
+      const ticketCode = document.getElementById("logTicketCode").value.trim();
+      const qs = new URLSearchParams();
+      if (ticketCode) qs.set("ticketCode", ticketCode);
+      qs.set("limit", "200");
+      const res = await api(`/admin/api/usage-logs?${qs.toString()}`);
+      const body = document.getElementById("logBody");
+      body.innerHTML = res.data.map(l => `
+        <tr>
+          <td>${l.createdAt}</td>
+          <td>${l.ticketCode}</td>
+          <td>${l.machineCode}</td>
+          <td>${l.platform}</td>
+          <td>${l.success ? "success" : "fail"}</td>
+          <td>${l.ip}</td>
+          <td>${l.message}</td>
+        </tr>
+      `).join("");
+    }
+
+    async function createTicket() {
+      const code = document.getElementById("newCode").value.trim();
+      const expiresLocal = document.getElementById("newExpires").value;
+      const note = document.getElementById("newNote").value.trim();
+      const expiresAt = expiresLocal ? new Date(expiresLocal).toISOString() : null;
+      const msg = document.getElementById("createMsg");
+      try {
+        await api("/admin/api/tickets", {
+          method: "POST",
+          body: JSON.stringify({ code, expiresAt, note })
+        });
+        msg.textContent = "创建成功";
+        await refreshAll();
+      } catch (e) {
+        msg.textContent = e.message;
+      }
+    }
+
+    async function bulkCreate() {
+      const prefix = document.getElementById("bulkPrefix").value.trim();
+      const count = Number(document.getElementById("bulkCount").value || "1");
+      const expiresInDaysRaw = document.getElementById("bulkDays").value.trim();
+      const expiresInDays = expiresInDaysRaw ? Number(expiresInDaysRaw) : undefined;
+      const msg = document.getElementById("createMsg");
+      try {
+        const res = await api("/admin/api/tickets/bulk", {
+          method: "POST",
+          body: JSON.stringify({ prefix, count, expiresInDays })
+        });
+        msg.textContent = `批量生成成功: ${res.data.length} 个`;
+        await refreshAll();
+      } catch (e) {
+        msg.textContent = e.message;
+      }
+    }
+
+    async function setStatus(code, status) {
+      await api(`/admin/api/tickets/${code}`, { method: "PATCH", body: JSON.stringify({ status }) });
+      await refreshAll();
+    }
+
+    async function unbindMachine(code) {
+      await api(`/admin/api/tickets/${code}`, { method: "PATCH", body: JSON.stringify({ unbindMachine: true, status: "active" }) });
+      await refreshAll();
+    }
+
+    async function deleteTicket(code) {
+      await api(`/admin/api/tickets/${code}`, { method: "DELETE" });
+      await refreshAll();
+    }
+
+    async function refreshAll() {
+      await Promise.all([loadStats(), loadTickets(), loadLogs()]);
+    }
+
+    async function initApp() {
+      const me = await api("/admin/api/me");
+      document.getElementById("whoami").textContent = `当前管理员: ${me.data.username}`;
+      document.getElementById("loginCard").classList.add("hidden");
+      document.getElementById("app").classList.remove("hidden");
+      await refreshAll();
+    }
+
+    document.getElementById("loginBtn").addEventListener("click", login);
+    document.getElementById("logoutBtn").addEventListener("click", logout);
+    document.getElementById("refreshBtn").addEventListener("click", refreshAll);
+    document.getElementById("createTicketBtn").addEventListener("click", createTicket);
+    document.getElementById("bulkCreateBtn").addEventListener("click", bulkCreate);
+    document.getElementById("ticketSearchBtn").addEventListener("click", loadTickets);
+    document.getElementById("logSearchBtn").addEventListener("click", loadLogs);
+
+    window.setStatus = setStatus;
+    window.unbindMachine = unbindMachine;
+    window.deleteTicket = deleteTicket;
+
+    (async () => {
+      try {
+        await initApp();
+      } catch {
+        // 未登录则停留在登录页面
+      }
+    })();
+  </script>
+</body>
+</html>
